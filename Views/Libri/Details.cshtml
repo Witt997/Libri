@@ -1,0 +1,43 @@
+﻿@model Libro
+@{
+    ViewData["Title"] = Model.Titolo;
+}
+
+<h2>@Model.Titolo</h2>
+<p>Anno di pubblicazione: @Model.AnnoPubblicazione</p>
+
+<h3>Autori</h3>
+<ul>
+    @foreach (var autore in Model.Autori)
+    {
+        <li>@autore.Autore.Cognome, @autore.Autore.Nome</li>
+    }
+</ul>
+
+<h3>Recensioni</h3>
+@if (Model.Recensioni.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Voto</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var recensione in Model.Recensioni)
+            {
+                <tr>
+                    <td>@recensione.Data.ToShortDateString()</td>
+                    <td>@recensione.Voto</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Nessuna recensione disponibile.</p>
+}
+
+<a asp-action="AddRecensione" asp-route-libroId="@Model.Id" class="btn btn-primary">Aggiungi Recensione</a>

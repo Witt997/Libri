@@ -1,0 +1,37 @@
+﻿@model List<LibroRecensioniViewModel>
+@{
+    ViewData["Title"] = "Libri con Recensioni";
+}
+
+<h2>Libri con più di @ViewBag.MinRec recensioni</h2>
+
+<form method="get">
+    <div class="form-group">
+        <label for="minRec">Numero minimo recensioni:</label>
+        <input type="number" name="minRec" class="form-control" value="@ViewBag.MinRec" />
+    </div>
+    <button type="submit" class="btn btn-primary">Filtra</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Titolo</th>
+            <th>Numero Recensioni</th>
+            <th>Voto Medio</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Libro.Titolo</td>
+                <td>@item.NumeroRecensioni</td>
+                <td>@item.VotoMedio.ToString("0.0")</td>
+            </tr>
+        }
+    <td>
+        <a asp-action="Details" asp-route-id="@libro.Id">Dettagli</a>
+    </td>
+    </tbody>
+</table>

@@ -1,0 +1,12 @@
+﻿@model int
+@{
+    ViewData["Title"] = "Cerca libro";
+}
+
+<form asp-action="Search" method="post">
+    <div class="form-group">
+        <label>Inserisci ID libro:</label>
+        <input type="number" name="id" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Cerca</button>
+</form>

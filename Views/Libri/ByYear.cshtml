@@ -1,0 +1,44 @@
+﻿@model List<Libro>
+@{
+    ViewData["Title"] = "Libri per Anno";
+}
+
+<h2>Libri pubblicati nel @ViewBag.Anno</h2>
+
+<form method="get">
+    <div class="form-group">
+        <label for="anno">Anno di pubblicazione:</label>
+        <input type="number" name="anno" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Cerca</button>
+</form>
+
+@if (Model.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Titolo</th>
+                <th>Autori</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var libro in Model)
+            {
+                <tr>
+                    <td>@libro.Titolo</td>
+                    <td>
+                        @string.Join(", ", libro.Autori.Select(la => $"{la.Autore.Cognome} {la.Autore.Nome}"))
+                    </td>
+                </tr>
+            }
+        <td>
+            <a asp-action="Details" asp-route-id="@libro.Id">Dettagli</a>
+        </td>
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Nessun libro trovato per l'anno specificato.</p>
+}

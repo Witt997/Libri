@@ -1,0 +1,36 @@
+﻿@model Libro
+@{
+    ViewData["Title"] = "Aggiungi Libro";
+}
+
+<h2>Aggiungi Libro</h2>
+
+<form asp-action="Create">
+    <div class="form-group">
+        <label asp-for="Titolo" class="control-label"></label>
+        <input asp-for="Titolo" class="form-control" />
+        <span asp-validation-for="Titolo" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="AnnoPubblicazione" class="control-label"></label>
+        <input asp-for="AnnoPubblicazione" class="form-control" />
+        <span asp-validation-for="AnnoPubblicazione" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Autori (massimo 5)</label>
+        @foreach (var autore in ViewBag.Autori)
+        {
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="autoriSelezionati" value="@autore.Id" />
+                    @autore.Cognome, @autore.Nome
+                </label>
+            </div>
+        }
+    </div>
+
+    <div class="form-group">
+        <input type="submit" value="Salva" class="btn btn-primary" />
+    </div>
+</form>

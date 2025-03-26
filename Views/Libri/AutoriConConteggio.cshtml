@@ -1,0 +1,24 @@
+﻿@model List<AutoreConteggioLibri>
+@{
+    ViewData["Title"] = "Autori con Conteggio Libri";
+}
+
+<h2>Autori con Conteggio Libri</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Autore</th>
+            <th>Numero Libri</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Autore.Cognome, @item.Autore.Nome</td>
+                <td>@item.NumeroLibri</td>
+            </tr>
+        }
+    </tbody>
+</table>
