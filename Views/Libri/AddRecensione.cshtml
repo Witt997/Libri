@@ -5,16 +5,18 @@
 
 <h2>@ViewData["Title"]</h2>
 
-<form asp-action="AddRecensione">
-    <input type="hidden" name="libroId" value="@ViewBag.LibroId" />
+<form asp-action="AddRecensione" method="post">
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    <input type="hidden" asp-for="LibroId" />
 
     <div class="form-group">
         <label asp-for="Voto" class="control-label"></label>
-        <input asp-for="Voto" class="form-control" min="1" max="10" />
+        <input asp-for="Voto" class="form-control" />
         <span asp-validation-for="Voto" class="text-danger"></span>
     </div>
 
     <div class="form-group">
-        <input type="submit" value="Salva" class="btn btn-primary" />
+        <input type="submit" value="Aggiungi Recensione" class="btn btn-primary" />
     </div>
 </form>

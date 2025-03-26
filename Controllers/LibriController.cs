@@ -1,4 +1,5 @@
-﻿using Libri.Models;
+﻿using System.Diagnostics;
+using Libri.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,23 +36,57 @@ public class LibriController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Libro libro, List<int> autoriSelezionati)
+    public async Task<IActionResult> Create(Libro libro, List<int> autoriSelezionati, string? nuovoAutoreNome, string? nuovoAutoreCognome)
     {
+        if (!ModelState.IsValid)
+        {
+            // Log the errors to see what's going wrong
+            foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+            {
+                Debug.WriteLine(error.ErrorMessage);
+            }
+            return View(libro); // or return the view with your model for AddRecensione
+        }
         if (ModelState.IsValid)
         {
             _context.Add(libro);
             await _context.SaveChangesAsync();
 
-            autoriSelezionati ??= new List<int>();
+            if (!string.IsNullOrWhiteSpace(nuovoAutoreNome) && !string.IsNullOrWhiteSpace(nuovoAutoreCognome))
             {
-                foreach (var autoreId in autoriSelezionati.Take(5)) // Massimo 5 autori
-                {
-                    _context.LibroAutori.Add(new LibroAutore { LibroId = libro.Id, AutoreId = autoreId });
-                }
+                Autore nuovoAutore = new Autore { Nome = nuovoAutoreNome, Cognome = nuovoAutoreCognome };
+                _context.Autori.Add(nuovoAutore);
                 await _context.SaveChangesAsync();
+
+                // Optionally, add the new author to the list of selected authors.
+                if (autoriSelezionati == null)
+                {
+                    autoriSelezionati = new List<int>();
+                }
+                autoriSelezionati.Add(nuovoAutore.Id);
             }
 
-            return RedirectToAction(nameof(Index));
+            // Ensure autoriSelezionati is not null.
+            autoriSelezionati ??= new List<int>();
+
+            // Limit to a maximum of 5 authors and add relations.
+            foreach (var autoreId in autoriSelezionati.Take(5))
+            {
+                _context.LibroAutori.Add(new LibroAutore { LibroId = libro.Id, AutoreId = autoreId });
+            }
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message (or use Debug.WriteLine/ex.Message)
+                Debug.WriteLine("Error saving changes: " + ex.Message);
+                throw;
+            }
+
+            return RedirectToAction(nameof(Details), new { id = libro.Id });
+
         }
         ViewBag.Autori = _context.Autori.ToList() ?? new List<Autore>();
         return View(libro);
@@ -65,23 +100,43 @@ public class LibriController : Controller
         {
             return NotFound();
         }
+        // Prepopulate the model with the book id
+        var recensione = new Recensione { LibroId = libroId };
         ViewBag.LibroTitolo = libro.Titolo;
-        return View();
+        return View(recensione);
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddRecensione(int libroId, Recensione recensione)
+    public async Task<IActionResult> AddRecensione(Recensione recensione)
     {
+        if (!ModelState.IsValid)
+        {
+            // Log the errors to see what's going wrong
+            foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+            {
+                Debug.WriteLine(error.ErrorMessage);
+            }
+            return View(recensione); // or return the view with your model for AddRecensione
+        }
         if (ModelState.IsValid)
         {
-            recensione.LibroId = libroId;
             recensione.Data = DateTime.Now;
             _context.Add(recensione);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Details), new { id = libroId });
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message (or use Debug.WriteLine/ex.Message)
+                Debug.WriteLine("Error saving changes: " + ex.Message);
+                throw;
+            }
+            return RedirectToAction(nameof(Details), new { id = recensione.LibroId });
         }
-        var libro = _context.Libri.Find(libroId);
-        ViewBag.LibroTitolo = libro.Titolo;
+        // If there’s an error, retrieve the book title for display
+        var libro = _context.Libri.Find(recensione.LibroId);
+        ViewBag.LibroTitolo = libro?.Titolo;
         return View(recensione);
     }
 
