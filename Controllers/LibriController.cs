@@ -85,7 +85,7 @@ public class LibriController : Controller
                 throw;
             }
 
-            return RedirectToAction(nameof(Details), new { id = libro.Id });
+            return RedirectToAction("Details", new { id = libro.Id });
 
         }
         ViewBag.Autori = _context.Autori.ToList() ?? new List<Autore>();
