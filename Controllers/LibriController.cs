@@ -1,8 +1,6 @@
 ﻿using Libri.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 
 public class LibriController : Controller
 {
@@ -32,7 +30,7 @@ public class LibriController : Controller
     // 1. Pagina per l'inserimento di un libro con autori
     public IActionResult Create()
     {
-        ViewBag.Autori = _context.Autori.ToList();
+        ViewBag.Autori = _context.Autori.ToList() ?? new List<Autore>();
         return View();
     }
 
@@ -44,7 +42,7 @@ public class LibriController : Controller
             _context.Add(libro);
             await _context.SaveChangesAsync();
 
-            if (autoriSelezionati != null)
+            autoriSelezionati ??= new List<int>();
             {
                 foreach (var autoreId in autoriSelezionati.Take(5)) // Massimo 5 autori
                 {
@@ -55,7 +53,7 @@ public class LibriController : Controller
 
             return RedirectToAction(nameof(Index));
         }
-        //ViewBag.Autori = _context.Autori.ToList();
+        ViewBag.Autori = _context.Autori.ToList() ?? new List<Autore>();
         return View(libro);
     }
 

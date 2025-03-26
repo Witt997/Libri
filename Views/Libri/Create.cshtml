@@ -19,7 +19,7 @@
 
     <div class="form-group">
         <label>Autori (massimo 5)</label>
-        @foreach (var autore in ViewBag.Autori)
+        @foreach (var autore in ViewBag.Autori as List<Autore> ?? new List<Autore>())
         {
             <div class="checkbox">
                 <label>

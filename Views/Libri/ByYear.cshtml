@@ -20,6 +20,7 @@
             <tr>
                 <th>Titolo</th>
                 <th>Autori</th>
+                <th>Azioni</th>
             </tr>
         </thead>
         <tbody>
@@ -30,11 +31,9 @@
                     <td>
                         @string.Join(", ", libro.Autori.Select(la => $"{la.Autore.Cognome} {la.Autore.Nome}"))
                     </td>
+                    <td><a asp-action="Details" asp-route-id="@libro.Id" class="btn btn-info btn-sm">Dettagli</a></td>
                 </tr>
             }
-        <td>
-            <a asp-action="Details" asp-route-id="@libro.Id">Dettagli</a>
-        </td>
         </tbody>
     </table>
 }

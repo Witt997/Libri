@@ -19,6 +19,7 @@
             <th>Titolo</th>
             <th>Numero Recensioni</th>
             <th>Voto Medio</th>
+            <th>Azioni</th>
         </tr>
     </thead>
     <tbody>
@@ -28,10 +29,8 @@
                 <td>@item.Libro.Titolo</td>
                 <td>@item.NumeroRecensioni</td>
                 <td>@item.VotoMedio.ToString("0.0")</td>
+                <td><a asp-action="Details" asp-route-id="@item.Libro.Id" class="btn btn-info btn-sm">Dettagli</a></td>
             </tr>
         }
-    <td>
-        <a asp-action="Details" asp-route-id="@libro.Id">Dettagli</a>
-    </td>
     </tbody>
 </table>
