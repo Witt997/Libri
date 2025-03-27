@@ -2,36 +2,44 @@
 using Libri.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+//using Microsoft.EntityFrameworkCore;
 
 public class LibriController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly DataAccess _dataAccess;
 
+    public LibriController(DataAccess dataAccess)
+    {
+        _dataAccess = dataAccess;
+    }
     public IActionResult Details(int id)
     {
-        var libro = _context.Libri
-            .Include(l => l.Autori)
-            .ThenInclude(la => la.Autore)
-            .Include(l => l.Recensioni)
-            .FirstOrDefault(l => l.Id == id);
+        //var libro = _dataAccess.Libri
+        //    .Include(l => l.Autori)
+        //    .ThenInclude(la => la.Autore)
+        //    .Include(l => l.Recensioni)
+        //    .FirstOrDefault(l => l.Id == id);
 
+        //if (libro == null)
+        //{
+        //    return NotFound();
+        //}
+
+        //return View(libro);
+
+        var libro = _dataAccess.GetLibroById(id);
         if (libro == null)
         {
             return NotFound();
         }
-
         return View(libro);
     }
 
-    public LibriController(ApplicationDbContext context)
-    {
-        _context = context;
-    }
 
     // 1. Pagina per l'inserimento di un libro con autori
     public IActionResult Create()
     {
-        ViewBag.Autori = _context.Autori.ToList() ?? new List<Autore>();
+        ViewBag.Autori = _dataAccess.GetAllAutori();
         return View();
     }
 
@@ -49,53 +57,43 @@ public class LibriController : Controller
         }
         if (ModelState.IsValid)
         {
-            _context.Add(libro);
-            await _context.SaveChangesAsync();
+            int libroId = await _dataAccess.InsertLibro(libro);
 
+            // Handle new author creation if provided.
             if (!string.IsNullOrWhiteSpace(nuovoAutoreNome) && !string.IsNullOrWhiteSpace(nuovoAutoreCognome))
             {
                 Autore nuovoAutore = new Autore { Nome = nuovoAutoreNome, Cognome = nuovoAutoreCognome };
-                _context.Autori.Add(nuovoAutore);
-                await _context.SaveChangesAsync();
-
-                // Optionally, add the new author to the list of selected authors.
+                int newAutoreId = await _dataAccess.InsertAutore(nuovoAutore);
                 if (autoriSelezionati == null)
                 {
                     autoriSelezionati = new List<int>();
                 }
-                autoriSelezionati.Add(nuovoAutore.Id);
+                autoriSelezionati.Add(newAutoreId);
             }
 
-            // Ensure autoriSelezionati is not null.
-            autoriSelezionati ??= new List<int>();
-
-            // Limit to a maximum of 5 authors and add relations.
-            foreach (var autoreId in autoriSelezionati.Take(5))
+            // Ensure autoriSelezionati is not null and insert the relationships (limit to 5 authors).
+            if (autoriSelezionati != null)
             {
-                _context.LibroAutori.Add(new LibroAutore { LibroId = libro.Id, AutoreId = autoreId });
-            }
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log the exception message (or use Debug.WriteLine/ex.Message)
-                Debug.WriteLine("Error saving changes: " + ex.Message);
-                throw;
+                foreach (var autoreId in autoriSelezionati.Take(5))
+                {
+                    await _dataAccess.InsertLibroAutore(libroId, autoreId);
+                }
             }
 
-            return RedirectToAction("Details", new { id = libro.Id });
+            //return RedirectToAction("Details", new { id = libroId });
+            var updatedLibro = _dataAccess.GetLibroDetails(libroId);
 
+            return View("Details", updatedLibro);
         }
-        ViewBag.Autori = _context.Autori.ToList() ?? new List<Autore>();
-        return View(libro);
+        ModelState.Clear();
+        ViewBag.Autori = _dataAccess.GetAllAutori();
+            return View(libro);
     }
 
     // 2. Inserimento recensione per un libro
     public IActionResult AddRecensione(int libroId)
     {
-        var libro = _context.Libri.Find(libroId);
+        var libro = _dataAccess.GetLibroById(libroId);
         if (libro == null)
         {
             return NotFound();
@@ -121,21 +119,14 @@ public class LibriController : Controller
         if (ModelState.IsValid)
         {
             recensione.Data = DateTime.Now;
-            _context.Add(recensione);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log the exception message (or use Debug.WriteLine/ex.Message)
-                Debug.WriteLine("Error saving changes: " + ex.Message);
-                throw;
-            }
-            return RedirectToAction(nameof(Details), new { id = recensione.LibroId });
+            await _dataAccess.InsertRecensione(recensione);
+            ModelState.Clear();
+            //return RedirectToAction(nameof(Details), new { id = recensione.LibroId });
+            var updatedLibro = _dataAccess.GetLibroDetails(recensione.LibroId);
+
+            return View("Details", updatedLibro);
         }
-        // If there’s an error, retrieve the book title for display
-        var libro = _context.Libri.Find(recensione.LibroId);
+        var libro = _dataAccess.GetLibroById(recensione.LibroId);
         ViewBag.LibroTitolo = libro?.Titolo;
         return View(recensione);
     }
@@ -148,11 +139,7 @@ public class LibriController : Controller
             return View(new List<Libro>());
         }
 
-        var libri = _context.Libri
-            .Include(l => l.Autori)
-            .ThenInclude(la => la.Autore)
-            .Where(l => l.AnnoPubblicazione == anno.Value)
-            .ToList();
+        var libri = _dataAccess.GetLibriByYear(anno.Value);
 
         return View(libri);
     }
@@ -160,31 +147,14 @@ public class LibriController : Controller
     // 4. Elenco autori con conteggio libri
     public IActionResult AutoriConConteggio()
     {
-        var autori = _context.Autori
-            .Select(a => new AutoreConteggioLibri
-            {
-                Autore = a,
-                NumeroLibri = a.Libri.Count
-            })
-            .ToList();
-
+        var autori = _dataAccess.GetAutoriConConteggio();
         return View(autori);
     }
 
     // 5. Libri con recensioni sopra una soglia
     public IActionResult WithReviews(int minRec = 0)
     {
-        var libri = _context.Libri
-            .Include(l => l.Recensioni)
-            .Select(l => new LibroRecensioniViewModel
-            {
-                Libro = l,
-                NumeroRecensioni = l.Recensioni.Count,
-                VotoMedio = l.Recensioni.Any() ? l.Recensioni.Average(r => r.Voto) : 0
-            })
-            .Where(l => l.NumeroRecensioni > minRec)
-            .ToList();
-
+        var libri = _dataAccess.GetLibriWithReviews(minRec);
         return View(libri);
     }
     public IActionResult Search()
